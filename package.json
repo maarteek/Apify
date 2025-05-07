@@ -5,7 +5,8 @@
     "main": "src/main.js",
     "dependencies": {
         "apify": "^3.4.0",
-        "crawlee": "^3.13.3"
+        "crawlee": "^3.13.3",
+        "puppeteer": "^21.0.0"
     },
     "scripts": {
         "start": "node src/main.js"
