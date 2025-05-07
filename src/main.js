@@ -51,7 +51,18 @@ Actor.main(async () => {
     });
 
     try {
-        await crawler.run([input.startUrls]);
+        // Convert URLs to proper request objects
+        const requests = input.startUrls.map(url => ({
+            url: url,
+            userData: {
+                searchArea: input.searchArea,
+                propertyType: input.propertyType,
+                maxPrice: input.maxPrice,
+                minPrice: input.minPrice
+            }
+        }));
+
+        await crawler.run(requests);
         log.info('Scraper finished successfully');
     } catch (error) {
         log.error('Scraper failed', {
