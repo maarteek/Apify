@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rightmove-scraper
+  labels:
+    app: rightmove-scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rightmove-scraper
+  template:
+    metadata:
+      labels:
+        app: rightmove-scraper
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+      - name: rightmove-scraper
+        image: apify/actor-rightmove-scraper:latest
+        env:
+        - name: APIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: apify-secrets
+              key: token
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8000
+          name: metrics
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

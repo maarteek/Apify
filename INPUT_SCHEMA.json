@@ -1,0 +1,48 @@
+{
+    "title": "Rightmove Scraper Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "startUrls": {
+            "title": "Start URLs",
+            "type": "array",
+            "description": "List of Rightmove property URLs to scrape",
+            "editor": "requestListSources"
+        },
+        "maxItems": {
+            "title": "Max Items",
+            "type": "integer",
+            "description": "Maximum number of properties to scrape",
+            "minimum": 1,
+            "default": 100
+        },
+        "webhooks": {
+            "title": "Webhooks",
+            "type": "array",
+            "description": "List of webhook configurations",
+            "editor": "json",
+            "default": [],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "title": "Webhook URL",
+                        "type": "string",
+                        "description": "URL where webhook notifications will be sent"
+                    },
+                    "eventTypes": {
+                        "title": "Event Types",
+                        "type": "array",
+                        "description": "Types of events to trigger webhook",
+                        "items": {
+                            "type": "string",
+                            "enum": ["ITEM_SCRAPED", "ITEM_FAILED", "RUN_FINISHED"]
+                        }
+                    }
+                },
+                "required": ["url", "eventTypes"]
+            }
+        }
+    },
+    "required": ["startUrls"]
+}

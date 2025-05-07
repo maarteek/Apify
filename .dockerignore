@@ -1,0 +1,28 @@
+# Version control
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+tests
+*.test.js
+
+# Documentation
+*.md
+docs/
+
+# Development
+.vscode/
+.idea/
+*.env
+.docker
+
+# OS
+.DS_Store
+Thumbs.db
