@@ -17,10 +17,27 @@ Actor.main(async () => {
     const crawler = new PuppeteerCrawler({
         maxRequestsPerCrawl: input.maxItems,
         
+        // Configure browser launcher
+        launchContext: {
+            launchOptions: {
+                headless: true,
+                args: [
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox'
+                ]
+            }
+        },
+        
         async requestHandler({ page, request }) {
             log.info('Processing page', { url: request.url });
             
-            await page.waitForSelector('.propertyCard-wrapper', { timeout: 10000 })
+            // Add a longer timeout and user agent
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36');
+            await page.setDefaultTimeout(30000);
+            
+            await page.waitForSelector('.propertyCard-wrapper', { timeout: 30000 })
                 .catch(() => {
                     throw new Error('No property listings found on page');
                 });
@@ -51,16 +68,22 @@ Actor.main(async () => {
     });
 
     try {
-        // Convert URLs to proper request objects
-        const requests = input.startUrls.map(url => ({
-            url: url,
+        // Construct the search URL with parameters
+        const searchUrl = new URL('https://www.rightmove.co.uk/property-for-sale/find.html');
+        if (input.searchArea) searchUrl.searchParams.set('searchLocation', input.searchArea);
+        if (input.maxPrice) searchUrl.searchParams.set('maxPrice', input.maxPrice);
+        if (input.minPrice) searchUrl.searchParams.set('minPrice', input.minPrice);
+        if (input.propertyType) searchUrl.searchParams.set('propertyTypes', input.propertyType);
+
+        const requests = [{
+            url: searchUrl.toString(),
             userData: {
                 searchArea: input.searchArea,
                 propertyType: input.propertyType,
                 maxPrice: input.maxPrice,
                 minPrice: input.minPrice
             }
-        }));
+        }];
 
         await crawler.run(requests);
         log.info('Scraper finished successfully');
