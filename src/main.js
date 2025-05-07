@@ -1,5 +1,5 @@
 const { Actor } = require('apify');
-const { PuppeteerCrawler } = require('crawlee');
+const { PuppeteerCrawler, log } = require('crawlee');
 
 Actor.main(async () => {
     // Get input and set defaults
@@ -12,13 +12,13 @@ Actor.main(async () => {
         minPrice: '200000'
     };
 
-    Actor.log.info('Starting scraper', { input });
+    log.info('Starting scraper', { input });
 
     const crawler = new PuppeteerCrawler({
         maxRequestsPerCrawl: input.maxItems,
         
         async requestHandler({ page, request }) {
-            Actor.log.info('Processing page', { url: request.url });
+            log.info('Processing page', { url: request.url });
             
             await page.waitForSelector('.propertyCard-wrapper', { timeout: 10000 })
                 .catch(() => {
@@ -36,14 +36,14 @@ Actor.main(async () => {
 
             await Actor.pushData(properties);
             
-            Actor.log.info('Extracted properties', { 
+            log.info('Extracted properties', { 
                 count: properties.length,
                 url: request.url 
             });
         },
 
         failedRequestHandler({ request, error }) {
-            Actor.log.error('Request failed', {
+            log.error('Request failed', {
                 url: request.url,
                 error: error.message
             });
@@ -52,9 +52,9 @@ Actor.main(async () => {
 
     try {
         await crawler.run([input.startUrls]);
-        Actor.log.info('Scraper finished successfully');
+        log.info('Scraper finished successfully');
     } catch (error) {
-        Actor.log.error('Scraper failed', {
+        log.error('Scraper failed', {
             error: error.message
         });
         throw error;
