@@ -6,42 +6,26 @@
         "startUrls": {
             "title": "Start URLs",
             "type": "array",
-            "description": "List of Rightmove property URLs to scrape",
-            "editor": "requestListSources"
+            "description": "List of Rightmove URLs to scrape",
+            "editor": "stringList",
+            "prefill": [
+                "https://www.rightmove.co.uk/properties/example"
+            ]
         },
         "maxItems": {
             "title": "Max Items",
             "type": "integer",
-            "description": "Maximum number of properties to scrape",
+            "description": "Maximum number of items to scrape",
             "minimum": 1,
             "default": 100
         },
-        "webhooks": {
-            "title": "Webhooks",
-            "type": "array",
-            "description": "List of webhook configurations",
-            "editor": "json",
-            "default": [],
-            "items": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "title": "Webhook URL",
-                        "type": "string",
-                        "description": "URL where webhook notifications will be sent"
-                    },
-                    "eventTypes": {
-                        "title": "Event Types",
-                        "type": "array",
-                        "description": "Types of events to trigger webhook",
-                        "items": {
-                            "type": "string",
-                            "enum": ["ITEM_SCRAPED", "ITEM_FAILED", "RUN_FINISHED"]
-                        }
-                    }
-                },
-                "required": ["url", "eventTypes"]
-            }
+        "timeZone": {
+            "title": "Time Zone",
+            "type": "string",
+            "description": "Timezone for date handling (e.g., 'UTC', 'Europe/London')",
+            "default": "UTC",
+            "editor": "select",
+            "enum": ["UTC", "Europe/London", "Europe/Paris", "Europe/Berlin"]
         }
     },
     "required": ["startUrls"]

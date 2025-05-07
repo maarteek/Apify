@@ -1,5 +1,7 @@
 const Apify = require('apify');
 
+const { log } = Apify.utils;
+
 class WebhookManager {
     constructor() {
         this.webhooks = [];
@@ -11,13 +13,13 @@ class WebhookManager {
         const input = await Apify.getInput();
         if (input.webhooks) {
             this.webhooks = input.webhooks;
-            console.log(`Initialized ${this.webhooks.length} webhooks`);
+            log.info('Webhooks initialized', { count: this.webhooks.length });
         }
     }
 
     async sendWebhook(event, payload, attempt = 1) {
         const relevantWebhooks = this.webhooks.filter(
-            webhook => webhook.eventTypes.includes(event)
+            (webhook) => webhook.eventTypes.includes(event),
         );
 
         for (const webhook of relevantWebhooks) {
@@ -35,23 +37,27 @@ class WebhookManager {
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Webhook-Event': event,
-                        'X-Run-Id': process.env.APIFY_ACTOR_RUN_ID
+                        'X-Run-Id': process.env.APIFY_ACTOR_RUN_ID,
                     },
                     timeoutSecs: 30,
                 });
             } catch (error) {
-                console.error(`Webhook delivery failed (attempt ${attempt}):`, error.message);
+                const errorData = {
+                    attempt,
+                    event,
+                    url: webhook.url,
+                    error: error.message,
+                };
+
+                log.error('Webhook delivery failed:', errorData);
+
                 if (attempt < this.retryCount) {
-                    await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+                    await new Promise((resolve) => setTimeout(resolve, this.retryDelay * attempt),
+                    );
                     await this.sendWebhook(event, payload, attempt + 1);
                 } else {
                     await Apify.pushData({
-                        '#webhook-failure': {
-                            event,
-                            url: webhook.url,
-                            error: error.message,
-                            attempts: attempt
-                        }
+                        '#webhook-failure': errorData,
                     });
                 }
             }

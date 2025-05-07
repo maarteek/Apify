@@ -8,16 +8,16 @@ async function validateAndClean(data) {
         const requiredFields = {
             basicInfo: ['id', 'price', 'title', 'propertyType'],
             location: ['postcode', 'address'],
-            features: ['bedrooms']
+            features: ['bedrooms'],
         };
 
         for (const [section, fields] of Object.entries(requiredFields)) {
-            const missingFields = fields.filter(field => !data[section]?.[field]);
+            const missingFields = fields.filter((field) => !data[section]?.[field]);
             if (missingFields.length > 0) {
                 throw new ScraperError(
                     `Missing required fields in ${section}`,
                     'VALIDATION_ERROR',
-                    { section, missingFields }
+                    { section, missingFields },
                 );
             }
         }
@@ -32,14 +32,14 @@ async function validateAndClean(data) {
             },
             features: {
                 ...data.features,
-                bedrooms: parseInt(data.features.bedrooms) || null,
-                bathrooms: parseInt(data.features.bathrooms) || null,
-                receptionRooms: parseInt(data.features.receptionRooms) || null,
+                bedrooms: parseInt(data.features.bedrooms, 10) || null,
+                bathrooms: parseInt(data.features.bathrooms, 10) || null,
+                receptionRooms: parseInt(data.features.receptionRooms, 10) || null,
             },
             metadata: {
                 scrapedAt: new Date().toISOString(),
-                version: '1.0.0'
-            }
+                version: '1.0.0',
+            },
         };
 
         performanceMonitor.endOperation('validation', validationStart);
@@ -51,5 +51,5 @@ async function validateAndClean(data) {
 }
 
 module.exports = {
-    validateAndClean
+    validateAndClean,
 };

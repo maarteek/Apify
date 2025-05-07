@@ -1,3 +1,6 @@
+const Apify = require('apify');
+
+const { log } = Apify.utils;
 const rightmove = require('./rightmove');
 const { ScraperError } = require('../utils/errors');
 const performanceMonitor = require('../utils/monitoring');
@@ -5,7 +8,7 @@ const performanceMonitor = require('../utils/monitoring');
 class ScraperManager {
     constructor() {
         this.scrapers = {
-            rightmove
+            rightmove,
         };
         this.retryDelays = [1000, 2000, 5000]; // Retry delays in milliseconds
     }
@@ -16,7 +19,7 @@ class ScraperManager {
             if (!this.scrapers[source]) {
                 throw new ScraperError(
                     `Unsupported source: ${source}`,
-                    'CONFIGURATION_ERROR'
+                    'CONFIGURATION_ERROR',
                 );
             }
 
@@ -28,12 +31,12 @@ class ScraperManager {
             return data;
         } catch (error) {
             performanceMonitor.endOperation('scrape', scrapeStart, error);
-            
+
             if (retryCount < this.retryDelays.length) {
-                await new Promise(resolve => setTimeout(resolve, this.retryDelays[retryCount]));
+                await new Promise((resolve) => setTimeout(resolve, this.retryDelays[retryCount]));
                 return this.scrapePage(page, source, retryCount + 1);
             }
-            
+
             throw error;
         }
     }
@@ -42,8 +45,12 @@ class ScraperManager {
         const prepStart = performanceMonitor.startOperation('preprocess');
         try {
             await page.setViewport({ width: 1920, height: 1080 });
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-            
+            await page.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                + 'AppleWebKit/537.36 (KHTML, like Gecko) '
+                + 'Chrome/91.0.4472.124 Safari/537.36',
+            );
+
             // Optimize page loading
             await page.setRequestInterception(true);
             page.on('request', (request) => {
@@ -55,12 +62,12 @@ class ScraperManager {
             });
 
             // Add custom error handling
-            page.on('error', error => {
+            page.on('error', (error) => {
                 throw new ScraperError('Page crashed', 'PAGE_CRASH', { error: error.message });
             });
 
-            page.on('pageerror', error => {
-                console.error('Page error:', error.message);
+            page.on('pageerror', (_error) => {
+                log.error('Page error occurred');
             });
 
             performanceMonitor.endOperation('preprocess', prepStart);
@@ -69,7 +76,7 @@ class ScraperManager {
             throw new ScraperError(
                 'Failed to preprocess page',
                 'PREPROCESSING_ERROR',
-                { error: error.message }
+                { error: error.message },
             );
         }
     }

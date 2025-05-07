@@ -1,22 +1,30 @@
 {
     "name": "rightmove-scraper",
-    "version": "1.0.0",
-    "description": "Apify actor for scraping Rightmove property listings",
+    "version": "0.1.2",
+    "description": "Rightmove property scraper",
     "main": "src/main.js",
     "scripts": {
         "start": "node src/main.js",
-        "test": "jest",
-        "lint": "eslint src/**/*.js",
-        "build": "docker build -t rightmove-scraper .",
-        "deploy": "apify push"
+        "test": "node src/test-build.js",
+        "build": "echo 'No build step needed'"
     },
     "dependencies": {
-        "apify": "^3.1.1",
-        "puppeteer": "^19.0.0"
+        "apify": "^3.4.0",
+        "crawlee": "^3.8.1",
+        "puppeteer": "^19.11.1",
+        "apify-client": "^2.12.3"
     },
     "devDependencies": {
-        "jest": "^29.0.0",
-        "eslint": "^8.0.0",
-        "@apify/eslint-config": "^0.3.0"
+        "typescript": "^5.8.3",
+        "@types/node": "^18.19.97"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/maarteek/rightmove-scraper.git"
+    },
+    "author": "maarteek",
+    "license": "ISC",
+    "engines": {
+        "node": ">=16.0.0"
     }
 }

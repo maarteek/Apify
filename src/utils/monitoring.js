@@ -14,10 +14,10 @@ class PerformanceMonitor {
             requests: {
                 total: 0,
                 successful: 0,
-                failed: 0
+                failed: 0,
             },
             memory: [],
-            errors: []
+            errors: [],
         };
     }
 
@@ -32,7 +32,7 @@ class PerformanceMonitor {
             this.metrics.operations[name] = {
                 count: 0,
                 totalTime: 0,
-                failures: 0
+                failures: 0,
             };
         }
         return performance.now();
@@ -42,13 +42,13 @@ class PerformanceMonitor {
         const duration = performance.now() - startTime;
         this.metrics.operations[name].count++;
         this.metrics.operations[name].totalTime += duration;
-        
+
         if (error) {
             this.metrics.operations[name].failures++;
             this.metrics.errors.push({
                 operation: name,
                 timestamp: new Date().toISOString(),
-                error: error.message
+                error: error.message,
             });
         }
     }
@@ -60,7 +60,7 @@ class PerformanceMonitor {
                 timestamp: new Date().toISOString(),
                 heapUsed: Math.round(used.heapUsed / 1024 / 1024),
                 heapTotal: Math.round(used.heapTotal / 1024 / 1024),
-                external: Math.round(used.external / 1024 / 1024)
+                external: Math.round(used.external / 1024 / 1024),
             });
         }, 30000); // Every 30 seconds
     }
@@ -78,10 +78,10 @@ class PerformanceMonitor {
     async saveMetrics() {
         clearInterval(this.memoryInterval);
         this.metrics.endTime = performance.now();
-        
+
         const duration = this.metrics.endTime - this.metrics.startTime;
         const successRate = (this.metrics.requests.successful / this.metrics.requests.total) * 100;
-        
+
         const finalMetrics = {
             timestamp: new Date().toISOString(),
             duration: Math.round(duration),
@@ -91,13 +91,13 @@ class PerformanceMonitor {
                 name,
                 count: data.count,
                 averageTime: Math.round(data.totalTime / data.count),
-                failureRate: (data.failures / data.count) * 100
+                failureRate: (data.failures / data.count) * 100,
             })),
             memory: {
                 measurements: this.metrics.memory,
-                peak: Math.max(...this.metrics.memory.map(m => m.heapUsed))
+                peak: Math.max(...this.metrics.memory.map((m) => m.heapUsed)),
             },
-            errors: this.metrics.errors
+            errors: this.metrics.errors,
         };
 
         await Apify.setValue('PERFORMANCE_METRICS', finalMetrics);

@@ -1,3 +1,7 @@
+const Apify = require('apify');
+
+const { log } = Apify.utils;
+
 class ScraperError extends Error {
     constructor(message, type = 'SCRAPER_ERROR', data = {}) {
         super(message);
@@ -5,28 +9,25 @@ class ScraperError extends Error {
         this.type = type;
         this.data = {
             ...data,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
     }
 }
 
 const handleError = async (error, request) => {
-    console.error('Error occurred while processing request:', {
+    const errorData = {
         url: request.url,
         errorMessage: error.message,
         errorType: error.type || error.name,
         errorData: error.data || {},
-        timestamp: new Date().toISOString()
-    });
+        timestamp: new Date().toISOString(),
+    };
+
+    // Replace console.error with log.error
+    log.error('Error occurred while processing request:', errorData);
 
     await Apify.pushData({
-        '#debug': {
-            url: request.url,
-            errorMessage: error.message,
-            errorType: error.type || error.name,
-            errorData: error.data || {},
-            timestamp: new Date().toISOString()
-        },
+        '#debug': errorData,
     });
 };
 

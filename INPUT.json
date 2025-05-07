@@ -1,0 +1,6 @@
+{
+    "startUrls": ["https://www.rightmove.co.uk/property-for-sale/find.html"],
+    "maxItems": 1,
+    "debug": true,
+    "timeZone": "UTC"
+}

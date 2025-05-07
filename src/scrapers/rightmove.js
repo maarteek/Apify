@@ -17,9 +17,12 @@ async function scrapePage(page) {
         // Wait for critical elements with timeout
         await Promise.race([
             page.waitForSelector('[data-testid="property-details"]'),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout waiting for property details')), 30000)
-            )
+            new Promise((_, reject) => {
+                setTimeout(
+                    () => reject(new Error('Timeout waiting for property details')),
+                    30000,
+                );
+            }),
         ]);
 
         const propertyData = await page.evaluate(() => {
@@ -30,7 +33,7 @@ async function scrapePage(page) {
 
             const getMultipleData = (selector) => {
                 return Array.from(document.querySelectorAll(selector))
-                    .map(el => el.textContent.trim())
+                    .map((el) => el.textContent.trim())
                     .filter(Boolean);
             };
 
@@ -42,7 +45,7 @@ async function scrapePage(page) {
                     propertyType: getData('[data-testid="property-type"]'),
                     addedOn: getData('[data-testid="added-on-date"]'),
                     tenure: getData('[data-testid="tenure-type"]'),
-                    councilTax: getData('[data-testid="council-tax-band"]')
+                    councilTax: getData('[data-testid="council-tax-band"]'),
                 },
                 location: {
                     postcode: getData('[data-testid="postcode"]'),
@@ -50,25 +53,25 @@ async function scrapePage(page) {
                     latitude: getData('#propertyMap', 'dataset')?.latitude,
                     longitude: getData('#propertyMap', 'dataset')?.longitude,
                     nearestStations: getMultipleData('[data-testid="nearest-stations"] li'),
-                    schoolsNearby: getMultipleData('[data-testid="nearby-schools"] li')
+                    schoolsNearby: getMultipleData('[data-testid="nearby-schools"] li'),
                 },
                 features: {
-                    bedrooms: parseInt(getData('[data-testid="beds"]')) || null,
-                    bathrooms: parseInt(getData('[data-testid="baths"]')) || null,
-                    receptionRooms: parseInt(getData('[data-testid="receptions"]')) || null,
+                    bedrooms: parseInt(getData('[data-testid="beds"]'), 10) || null,
+                    bathrooms: parseInt(getData('[data-testid="baths"]'), 10) || null,
+                    receptionRooms: parseInt(getData('[data-testid="receptions"]'), 10) || null,
                     keyFeatures: getMultipleData('[data-testid="key-features"] li'),
-                    propertyFeatures: getMultipleData('[data-testid="property-features"] li')
+                    propertyFeatures: getMultipleData('[data-testid="property-features"] li'),
                 },
                 media: {
                     images: Array.from(document.querySelectorAll('[data-testid="gallery-image"]'))
-                        .map(img => ({
+                        .map((img) => ({
                             url: img.src,
-                            caption: img.alt
+                            caption: img.alt,
                         })),
                     floorplans: Array.from(document.querySelectorAll('[data-testid="floorplan-image"]'))
-                        .map(img => img.src),
+                        .map((img) => img.src),
                     virtualTour: getData('[data-testid="virtual-tour"]', 'href'),
-                    videoTour: getData('[data-testid="video-tour"]', 'href')
+                    videoTour: getData('[data-testid="video-tour"]', 'href'),
                 },
                 description: getData('[data-testid="property-description"]'),
                 agent: {
@@ -76,20 +79,22 @@ async function scrapePage(page) {
                     phone: getData('[data-testid="agent-phone"]'),
                     email: getData('[data-testid="agent-email"]'),
                     branchName: getData('[data-testid="branch-name"]'),
-                    branchAddress: getData('[data-testid="branch-address"]')
+                    branchAddress: getData('[data-testid="branch-address"]'),
                 },
                 pricing: {
                     currentPrice: parseFloat(getData('[data-testid="current-price"]')?.replace(/[£,]/g, '')) || null,
                     priceHistory: Array.from(document.querySelectorAll('[data-testid="price-history"] tr'))
-                        .map(row => ({
+                        .map((row) => ({
                             date: row.querySelector('td:first-child')?.textContent.trim(),
-                            price: parseFloat(row.querySelector('td:last-child')?.textContent.replace(/[£,]/g, '')) || null
-                        }))
+                            price: parseFloat(
+                                row.querySelector('td:last-child')?.textContent.replace(/[£,]/g, ''),
+                            ) || null,
+                        })),
                 },
                 epcRating: {
                     current: getData('[data-testid="epc-rating-current"]'),
-                    potential: getData('[data-testid="epc-rating-potential"]')
-                }
+                    potential: getData('[data-testid="epc-rating-potential"]'),
+                },
             };
         });
 
@@ -98,23 +103,22 @@ async function scrapePage(page) {
             throw new ScraperError(
                 'Missing critical property data',
                 'VALIDATION_ERROR',
-                { url: page.url() }
+                { url: page.url() },
             );
         }
 
         performanceMonitor.endOperation('propertyDetails', scrapeStart);
         return propertyData;
-
     } catch (error) {
         performanceMonitor.endOperation('propertyDetails', scrapeStart, error);
         throw new ScraperError(
             `Failed to scrape property page: ${error.message}`,
             'SCRAPE_ERROR',
-            { 
+            {
                 url: page.url(),
                 timestamp: new Date().toISOString(),
-                errorDetails: error.stack
-            }
+                errorDetails: error.stack,
+            },
         );
     }
 }
@@ -124,13 +128,13 @@ async function validateProperty(propertyData) {
     try {
         // Add validation logic here
         const requiredFields = ['id', 'price', 'title', 'propertyType'];
-        const missingFields = requiredFields.filter(field => !propertyData.basicInfo[field]);
-        
+        const missingFields = requiredFields.filter((field) => !propertyData.basicInfo[field]);
+
         if (missingFields.length > 0) {
             throw new ScraperError(
                 'Missing required fields',
                 'VALIDATION_ERROR',
-                { missingFields }
+                { missingFields },
             );
         }
 
@@ -144,5 +148,5 @@ async function validateProperty(propertyData) {
 
 module.exports = {
     scrapePage,
-    validateProperty
+    validateProperty,
 };
