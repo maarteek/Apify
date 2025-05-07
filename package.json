@@ -1,30 +1,14 @@
 {
     "name": "rightmove-scraper",
-    "version": "0.1.2",
-    "description": "Rightmove property scraper",
-    "main": "src/main.js",
-    "scripts": {
-        "start": "node src/main.js",
-        "test": "node src/test-build.js",
-        "build": "echo 'No build step needed'"
-    },
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Rightmove property scraper using Apify",
     "dependencies": {
         "apify": "^3.4.0",
-        "crawlee": "^3.8.1",
-        "puppeteer": "^19.11.1",
-        "apify-client": "^2.12.3"
+        "crawlee": "^3.13.3",
+        "puppeteer": "^21.0.0"
     },
-    "devDependencies": {
-        "typescript": "^5.8.3",
-        "@types/node": "^18.19.97"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/maarteek/rightmove-scraper.git"
-    },
-    "author": "maarteek",
-    "license": "ISC",
-    "engines": {
-        "node": ">=16.0.0"
+    "scripts": {
+        "start": "node src/main.js"
     }
 }
