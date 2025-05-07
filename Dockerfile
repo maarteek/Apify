@@ -1,14 +1,10 @@
-FROM apify/actor-node:20
-WORKDIR /usr/src/app
+FROM apify/actor-node-puppeteer-chrome:18
 
-# First, copy just package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --quiet
+RUN npm install --include=dev
 
-# Then copy the rest of your actor's source code
+# Copy source code
 COPY . ./
-
-# Run the actor
-CMD [ "npm", "start" ]
