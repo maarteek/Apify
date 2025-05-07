@@ -16,6 +16,9 @@ Actor.main(async () => {
 
     const crawler = new PuppeteerCrawler({
         maxRequestsPerCrawl: input.maxItems,
+        maxConcurrency: 1, // Limit concurrent requests to avoid blocking
+        navigationTimeoutSecs: 30, // 30 second timeout for navigation
+        requestHandlerTimeoutSecs: 60, // 1 minute timeout for processing
         
         // Configure browser launcher
         launchContext: {
@@ -25,7 +28,10 @@ Actor.main(async () => {
                     '--disable-dev-shm-usage',
                     '--disable-gpu',
                     '--no-sandbox',
-                    '--disable-setuid-sandbox'
+                    '--disable-setuid-sandbox',
+                    '--disable-javascript', // Since we only need static content
+                    '--no-zygote',
+                    '--single-process'
                 ]
             }
         },
@@ -33,23 +39,62 @@ Actor.main(async () => {
         async requestHandler({ page, request }) {
             log.info('Processing page', { url: request.url });
             
-            // Add a longer timeout and user agent
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36');
-            await page.setDefaultTimeout(30000);
+            // Set strict timeouts
+            page.setDefaultNavigationTimeout(30000); // 30 seconds
+            page.setDefaultTimeout(30000);
             
-            await page.waitForSelector('.propertyCard-wrapper', { timeout: 30000 })
-                .catch(() => {
-                    throw new Error('No property listings found on page');
-                });
-
-            const properties = await page.$$eval('.propertyCard-wrapper', (cards) => {
-                return cards.map(card => ({
-                    price: card.querySelector('.propertyCard-priceValue')?.textContent?.trim() || '',
-                    address: card.querySelector('.propertyCard-address')?.textContent?.trim() || '',
-                    description: card.querySelector('.propertyCard-description')?.textContent?.trim() || '',
-                    url: card.querySelector('a.propertyCard-link')?.href || ''
-                }));
+            // Block unnecessary resources
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+                const resourceType = req.resourceType();
+                if (['image', 'stylesheet', 'font', 'script'].includes(resourceType)) {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
             });
+
+            // Set a realistic user agent
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36');
+            
+            // Navigate with timeout
+            try {
+                await page.goto(request.url, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 30000
+                });
+            } catch (error) {
+                throw new Error(`Navigation failed: ${error.message}`);
+            }
+
+            // Wait for the property cards with timeout
+            try {
+                await page.waitForSelector('.propertyCard-wrapper', { 
+                    timeout: 10000,
+                    visible: true 
+                });
+            } catch (error) {
+                throw new Error('No property listings found on page');
+            }
+
+            // Extract data with timeout
+            const properties = await Promise.race([
+                page.$$eval('.propertyCard-wrapper', (cards) => {
+                    return cards.map(card => ({
+                        price: card.querySelector('.propertyCard-priceValue')?.textContent?.trim() || '',
+                        address: card.querySelector('.propertyCard-address')?.textContent?.trim() || '',
+                        description: card.querySelector('.propertyCard-description')?.textContent?.trim() || '',
+                        url: card.querySelector('a.propertyCard-link')?.href || ''
+                    }));
+                }),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Data extraction timed out')), 10000)
+                )
+            ]);
+
+            if (!properties.length) {
+                throw new Error('No properties found on page');
+            }
 
             await Actor.pushData(properties);
             
@@ -85,7 +130,14 @@ Actor.main(async () => {
             }
         }];
 
+        // Set a global timeout for the entire crawl
+        const timeout = setTimeout(() => {
+            log.error('Crawler exceeded maximum runtime of 3 minutes');
+            process.exit(1);
+        }, 180000); // 3 minutes
+
         await crawler.run(requests);
+        clearTimeout(timeout);
         log.info('Scraper finished successfully');
     } catch (error) {
         log.error('Scraper failed', {
