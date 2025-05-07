@@ -1,12 +1,11 @@
 {
     "name": "rightmove-scraper",
-    "version": "1.0.0",
-    "type": "module",
+    "version": "0.1.2",
     "description": "Rightmove property scraper using Apify",
+    "main": "src/main.js",
     "dependencies": {
         "apify": "^3.4.0",
-        "crawlee": "^3.13.3",
-        "puppeteer": "^21.0.0"
+        "crawlee": "^3.13.3"
     },
     "scripts": {
         "start": "node src/main.js"
